@@ -26,6 +26,7 @@ root.rowconfigure(0, weight=1)
 # text labels
 ttk.Label(mainframe, text=intro_text).grid(column=2, row=1, sticky=S)
 
-ttk.Button(root, text="Hello World").grid()
+ttk.Button(root, text="Start").grid()
+ttk.Button(root, text="Close").grid()
 
 root.mainloop()
