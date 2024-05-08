@@ -22,6 +22,9 @@ with open('privacy_message.txt', 'r') as privacy_message:
 # Ingredient selection instructions
 with open('ingr_choose_instructions.txt', 'r') as ingr_choose:
     ingr_instructions = ingr_choose.read()
+# quick conversion info
+with open('quick_conversion_list.txt', 'r') as shortcut_list:
+    quick_ingr_list = shortcut_list.read()
 
 
 class BakingConversionApp(tk.Tk):
@@ -63,8 +66,8 @@ class StartPage(tk.Frame):
 
         # buttons
         start_button = tk.Button(self, text="Start", command=lambda: controller.show_frame(IngrChoose))
-        close_button = tk.Button(self, text="Close Program")
-        quick_list = tk.Button(self, text="Get Quick List")
+        close_button = tk.Button(self, text="Close Program", command=self.master.quit)
+        quick_list = tk.Button(self, text="Get Quick List", command=self.open_quick_list)
 
         # layout
         Intro_label.grid(column=1, row=0, columnspan=5)
@@ -74,6 +77,10 @@ class StartPage(tk.Frame):
         quick_list.grid(column=1, row=2)
         close_button.grid(column=1, row=3)
 
+    def open_quick_list(self):
+        new_window = tk.Toplevel()
+        content = tk.Label(new_window, text=quick_ingr_list)
+        content.grid()
 
 class IngrChoose(tk.Frame):
 
@@ -85,7 +92,7 @@ class IngrChoose(tk.Frame):
         self.list_to_convert = ttk.Treeview(self, columns=(1, 2, 3), show="headings")
         self.output_frame = tk.LabelFrame(self, text="Your Converted Ingredients")
         self.converted_output = ttk.Treeview(self, columns=(1, 2), show="headings")
-        
+
         self.ingredients_and_units = []
         self.converted_ingredients = []
 
@@ -105,7 +112,6 @@ class IngrChoose(tk.Frame):
         self.converted_output.column("1", stretch=True)
         self.converted_output.column("2", stretch=False)
 
-
         # dropdown & input boxes: ingredient list and unit types
         self.ingr_default = "Choose Ingredient"
         self.ingr_chosen = tk.StringVar(value=self.ingr_default)
@@ -123,8 +129,9 @@ class IngrChoose(tk.Frame):
         self.delete_button = tk.Button(self.button_frame, text="Delete", command=self.delete_entry)
         self.add_ingr_button = tk.Button(self.button_frame, text="Add Ingredient", command=self.add_entry)
         self.convert_button = tk.Button(self.button_frame, text="Convert", command=self.convert_all)
-        self.close_button = tk.Button(self.button_frame, text="Close Program")
-
+        self.close_button = tk.Button(self.button_frame, text="Close Program", command=self.master.quit)
+        self.back_button = tk.Button(self.button_frame, text="Previous", command=lambda: controller.show_frame(StartPage))
+        
         # layout
         self.instructions.grid(column=0, row=0)
         self.input_frame.grid(row=1, column=0, rowspan=3, columnspan=5)
@@ -144,6 +151,7 @@ class IngrChoose(tk.Frame):
         self.add_ingr_button.grid(column=1, row=1)
         self.convert_button.grid(column=2, row=1)
         self.close_button.grid(column=4, row=1)
+        self.back_button.grid(column=0, row=1)
 
     # methods
     # json stuff
