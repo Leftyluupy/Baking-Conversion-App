@@ -1,6 +1,5 @@
 unit_types = [
-    "Cup (dry)",
-    "Cup (fluid)",
+    "Cup",
     "Tablespoon",
     "Teaspoon"
 ]
