@@ -64,13 +64,15 @@ class StartPage(tk.Frame):
         # buttons
         start_button = tk.Button(self, text="Start", command=lambda: controller.show_frame(IngrChoose))
         close_button = tk.Button(self, text="Close Program")
+        quick_list = tk.Button(self, text="Get Quick List")
 
         # layout
         Intro_label.grid(column=1, row=0, columnspan=5)
-        copyright_label.grid(column=1, row=4)
-        privacy_label.grid(column=1, row=3)
+        copyright_label.grid(column=1, row=5)
+        privacy_label.grid(column=1, row=4)
         start_button.grid(column=1, row=1)
-        close_button.grid(column=1, row=2)
+        quick_list.grid(column=1, row=2)
+        close_button.grid(column=1, row=3)
 
 
 class IngrChoose(tk.Frame):
@@ -81,8 +83,11 @@ class IngrChoose(tk.Frame):
         self.input_frame = tk.LabelFrame(self, text="Add Ingredient to List")
         self.button_frame = tk.LabelFrame(self)
         self.list_to_convert = ttk.Treeview(self, columns=(1, 2, 3), show="headings")
-
+        self.output_frame = tk.LabelFrame(self, text="Your Converted Ingredients")
+        self.converted_output = ttk.Treeview(self, columns=(1, 2), show="headings")
+        
         self.ingredients_and_units = []
+        self.converted_ingredients = []
 
         # text labels : instructions, list items: ("Ingredient:", "Convert From:")
         self.instructions = tk.Label(self, text=ingr_instructions)
@@ -95,6 +100,11 @@ class IngrChoose(tk.Frame):
         self.list_to_convert.column("1", stretch=True)
         self.list_to_convert.column("2", stretch=False)
         self.list_to_convert.column("3", stretch=False)
+        self.converted_output.heading(1, text="Ingredient")
+        self.converted_output.heading(2, text="Grams")
+        self.converted_output.column("1", stretch=True)
+        self.converted_output.column("2", stretch=False)
+
 
         # dropdown & input boxes: ingredient list and unit types
         self.ingr_default = "Choose Ingredient"
@@ -109,17 +119,19 @@ class IngrChoose(tk.Frame):
         self.amount_to_convert = tk.StringVar()
         self.amount_enter = tk.Entry(self.input_frame)
 
-        # buttons: delete, add new ingredient, next, close
+        # buttons: delete, add new ingredient, convert, close
         self.delete_button = tk.Button(self.button_frame, text="Delete", command=self.delete_entry)
         self.add_ingr_button = tk.Button(self.button_frame, text="Add Ingredient", command=self.add_entry)
-        self.next_button = tk.Button(self, text="Next", command=lambda: controller.show_frame(InputMeasurements))
-        self.close_button = tk.Button(self, text="Close Program")
+        self.convert_button = tk.Button(self.button_frame, text="Convert", command=self.convert_all)
+        self.close_button = tk.Button(self.button_frame, text="Close Program")
 
         # layout
         self.instructions.grid(column=0, row=0)
         self.input_frame.grid(row=1, column=0, rowspan=3, columnspan=5)
         self.button_frame.grid(column=0, row=4)
         self.list_to_convert.grid(column=0, row=7)
+        self.output_frame.grid(column=0, row=15)
+        self.converted_output.grid(column=0, row=16)
 
         self.ingr_list_label.grid(column=0, row=1)
         self.ingr_drop.grid(column=0, row=1)
@@ -128,10 +140,10 @@ class IngrChoose(tk.Frame):
         self.amount_to_convert_label.grid(column=3, row=1)
         self.amount_enter.grid(column=4, row=1)
 
-        self.delete_button.grid(column=4, row=1)
-        self.add_ingr_button.grid()
-        self.next_button.grid(column=3, row=3)
-        self.close_button.grid(column=3, row=4)
+        self.delete_button.grid(column=3, row=1)
+        self.add_ingr_button.grid(column=1, row=1)
+        self.convert_button.grid(column=2, row=1)
+        self.close_button.grid(column=4, row=1)
 
     # methods
     # json stuff
@@ -210,10 +222,37 @@ class IngrChoose(tk.Frame):
             self.load_ingredients_window_with_json()
             self.reset_all_fields()
 
-    # def proceed(self):
-    #     if len(self.ingredients_and_units) > 0:
-    #         self.controller.show_frame(InputMeasurements)
+    def convert_all(self):
 
+        for item in self.ingredients_and_units:
+            # check ingredient type
+            if item["Ingredient"] == "Butter":
+                unit_type = item["Unit"]
+                amount_multiplier = item["Amount"]
+                if unit_type == "Cup":
+                    butter_in_grams = amount_multiplier * 230
+                    butter_in_grams = int(butter_in_grams)
+                    temp_dict = {item["Ingredient"]: butter_in_grams}
+                    self.converted_ingredients.append(temp_dict)
+
+        with open("converted_info.json", "w") as file_handler:
+            json.dump(self.converted_ingredients, file_handler, indent=4)
+        file_handler.close
+        self.display_conversions()
+    
+    def display_conversions(self):
+        with open("converted_info.json", "r") as file_handler:
+            self.converted_ingredients = json.load(file_handler)
+        file_handler.close
+        
+        for item in self.converted_output.get_children():
+            self.converted_output.delete(item)
+
+        rowIndex = 1
+        for item in self.converted_ingredients:
+            for key, value in item.items():
+                self.converted_output.insert('', index="end", iid=rowIndex, text='', values=(key, value))
+                rowIndex += 1
 
 class InputMeasurements(tk.Frame):
 
