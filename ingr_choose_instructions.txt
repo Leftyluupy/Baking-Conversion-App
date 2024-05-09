@@ -1,3 +1,4 @@
 Choose the ingredient(s) you would like to convert from the drop down menu.
 To add a new ingredient, click the "Add Ingredient" button.
 To delete an ingredient, click on it and then click the "Delete" button.
+When you have finished adding ingredients, click "Convert" and get your conversions!
