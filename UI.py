@@ -8,7 +8,17 @@ import tkinter as tk
 # from tkinter import *
 from tkinter import ttk
 import json
+import zmq
 
+context = zmq.Context()
+
+# sockets for the conversion microservice functions
+butter_socket = context.socket(zmq.REQ)
+butter_socket.connect("tcp://localhost:4444")
+flour_socket = context.socket(zmq.REQ)
+flour_socket.connect("tcp://localhost:3333")
+sugar_socket = context.socket(zmq.REQ)
+sugar_socket.connect("tcp://localhost:2222")
 
 from dropdown_ingredients import dropdown_ingredients
 from unit_types import unit_types
@@ -137,8 +147,8 @@ class IngrChoose(tk.Frame):
         self.input_frame.grid(row=1, column=0, rowspan=3, columnspan=5)
         self.button_frame.grid(column=0, row=4)
         self.list_to_convert.grid(column=0, row=7)
-        self.output_frame.grid(column=0, row=15)
-        self.converted_output.grid(column=0, row=16)
+        self.output_frame.grid(column=0, row=20)
+        self.converted_output.grid(column=0)
 
         self.ingr_list_label.grid(column=0, row=1)
         self.ingr_drop.grid(column=0, row=1)
@@ -203,6 +213,12 @@ class IngrChoose(tk.Frame):
 
     # button command stuff
 
+    def update_everything(self):
+        self.save_json_to_file()
+        self.load_json_from_file()
+        self.load_ingredients_window_with_json()
+        self.reset_all_fields()
+
     def add_entry(self):
         ingr_to_add = self.ingr_chosen.get()
         unit_to_add = self.unit_chosen.get()
@@ -214,10 +230,7 @@ class IngrChoose(tk.Frame):
                          "Unit": unit_to_add,
                          "Amount": amount_to_add}
             self.ingredients_and_units.append(temp_dict)
-            self.save_json_to_file()
-            self.load_json_from_file()
-            self.load_ingredients_window_with_json()
-            self.reset_all_fields()
+            self.update_everything()
 
     def delete_entry(self):
         id_num = self.list_to_convert.focus()
@@ -225,29 +238,28 @@ class IngrChoose(tk.Frame):
         row = self.find_selected_row_in_list(id_num)
         if row >= 0:
             del self.ingredients_and_units[row]
-            self.save_json_to_file()
-            self.load_json_from_file()
-            self.load_ingredients_window_with_json()
-            self.reset_all_fields()
+            self.update_everything()
 
     def convert_all(self):
+        # go through each json list item in order - for loop does this
+        # send to conversion microservices
+        # get back and put in same order as before - for loop does this
 
         for item in self.ingredients_and_units:
             # check ingredient type
             if item["Ingredient"] == "Butter":
-                unit_type = item["Unit"]
-                amount_multiplier = item["Amount"]
-                if unit_type == "Cup":
-                    butter_in_grams = amount_multiplier * 230
-                    butter_in_grams = int(butter_in_grams)
-                    temp_dict = {item["Ingredient"]: butter_in_grams}
-                    self.converted_ingredients.append(temp_dict)
+                sent_item = json.dumps(item)
+                butter_socket.send_string(sent_item)
+                converted_butter = butter_socket.recv_string()
+                self.converted_ingredients.append(json.loads(converted_butter))
+            if item["Ingredient"] == "Flour: AP":
+
 
         with open("converted_info.json", "w") as file_handler:
             json.dump(self.converted_ingredients, file_handler, indent=4)
         file_handler.close
         self.display_conversions()
-    
+   
     def display_conversions(self):
         with open("converted_info.json", "r") as file_handler:
             self.converted_ingredients = json.load(file_handler)
@@ -262,6 +274,7 @@ class IngrChoose(tk.Frame):
                 self.converted_output.insert('', index="end", iid=rowIndex, text='', values=(key, value))
                 rowIndex += 1
 
+
 class InputMeasurements(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -269,6 +282,7 @@ class InputMeasurements(tk.Frame):
         
         self.input_frame = tk.LabelFrame(self, text="Enter a number for each ingredient")
         self.button_frame = tk.LabelFrame(self)
+
 
 root = BakingConversionApp()
 root.mainloop()
