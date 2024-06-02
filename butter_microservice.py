@@ -1,3 +1,6 @@
+# butter: 225, 227, 230g per cup
+# butter: 14, 16, 17g per tablespoon??
+
 import zmq
 import json
 
@@ -15,8 +18,10 @@ while True:
 
     # perform conversion
     if unit_type == "Cup":
-        butter_in_grams = amount_multiplier * 230
-        butter_in_grams = int(butter_in_grams)
+        butter_in_grams = amount_multiplier * 225
+    if unit_type == "Tablespoon":
+        butter_in_grams = amount_multiplier * 14
+    butter_in_grams = int(butter_in_grams)
 
     # Create dictionary & send back
     temp_dict = {received_butter_dict["Ingredient"]: butter_in_grams}
