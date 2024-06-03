@@ -9,6 +9,8 @@ import tkinter as tk
 from tkinter import ttk
 import json
 import zmq
+from dropdown_ingredients import dropdown_ingredients
+from unit_types import unit_types
 
 context = zmq.Context()
 
@@ -19,9 +21,8 @@ flour_socket = context.socket(zmq.REQ)
 flour_socket.connect("tcp://localhost:3333")
 sugar_socket = context.socket(zmq.REQ)
 sugar_socket.connect("tcp://localhost:2222")
-
-from dropdown_ingredients import dropdown_ingredients
-from unit_types import unit_types
+cocoa_powder_socket = context.socket(zmq.REQ)
+cocoa_powder_socket.connect("tcp://localhost:4545")
 
 # UI introduction explanation
 with open('ui_intro_message.txt', 'r') as intro_message:
@@ -141,7 +142,7 @@ class IngrChoose(tk.Frame):
         self.convert_button = tk.Button(self.button_frame, text="Convert", command=self.convert_all)
         self.close_button = tk.Button(self.button_frame, text="Close Program", command=self.master.quit)
         self.back_button = tk.Button(self.button_frame, text="Previous", command=lambda: controller.show_frame(StartPage))
-        
+ 
         # layout
         self.instructions.grid(column=0, row=0)
         self.input_frame.grid(row=1, column=0, rowspan=3, columnspan=5)
@@ -241,18 +242,29 @@ class IngrChoose(tk.Frame):
             self.update_everything()
 
     def convert_all(self):
-        # go through each json list item in order - for loop does this
-        # send to conversion microservices
-        # get back and put in same order as before - for loop does this
 
         for item in self.ingredients_and_units:
-            # check ingredient type
             if item["Ingredient"] == "Butter":
                 sent_item = json.dumps(item)
                 butter_socket.send_string(sent_item)
                 converted_butter = butter_socket.recv_string()
                 self.converted_ingredients.append(json.loads(converted_butter))
             if item["Ingredient"] == "Flour: AP":
+                sent_item = json.dumps(item)
+                flour_socket.send_string(sent_item)
+                converted_flour = flour_socket.recv_string()
+                self.converted_ingredients.append(json.loads(converted_flour))
+            if item["Ingredient"] == "White Sugar":
+                sent_item = json.dumps(item)
+                sugar_socket.send_string(sent_item)
+                converted_sugar = sugar_socket.recv_string()
+                self.converted_ingredients.append(json.loads(converted_sugar))
+            if item["Ingredient"] == "Cocoa Powder":
+                sent_item = json.dumps(item)
+                cocoa_powder_socket.send_string(sent_item)
+                converted_cocoa_powder = cocoa_powder_socket.recv_string()
+                self.converted_ingredients.append(json.loads(converted_cocoa_powder))
+            
 
 
         with open("converted_info.json", "w") as file_handler:
