@@ -23,6 +23,8 @@ sugar_socket = context.socket(zmq.REQ)
 sugar_socket.connect("tcp://localhost:2222")
 cocoa_powder_socket = context.socket(zmq.REQ)
 cocoa_powder_socket.connect("tcp://localhost:4545")
+peanut_butter_socket = context.socket(zmq.REQ)
+peanut_butter_socket.connect("tcp://localhost:7777")
 
 # UI introduction explanation
 with open('ui_intro_message.txt', 'r') as intro_message:
@@ -264,7 +266,11 @@ class IngrChoose(tk.Frame):
                 cocoa_powder_socket.send_string(sent_item)
                 converted_cocoa_powder = cocoa_powder_socket.recv_string()
                 self.converted_ingredients.append(json.loads(converted_cocoa_powder))
-            
+            if item["Ingredient"] == "Peanut Butter":
+                sent_item = json.dumps(item)
+                peanut_butter_socket.send_string(sent_item)
+                converted_peanut_butter = peanut_butter_socket.recv_string()
+                self.converted_ingredients.append(json.loads(converted_peanut_butter))
 
 
         with open("converted_info.json", "w") as file_handler:
